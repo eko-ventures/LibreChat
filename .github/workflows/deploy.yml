@@ -24,7 +24,7 @@ jobs:
       # 3. Run the docker-compose deployment commands
       - name: Deploy with Docker Compose
         run: |         
-          # Pull the latest versions of the images (mongo, etc)
+          # Pull the latest versions of the images (mongo, etc) 
           docker compose pull
 
           # Build the local images (like 'api' and 'client')
