@@ -24,6 +24,8 @@ jobs:
       # 3. Run the docker-compose deployment commands
       - name: Deploy with Docker Compose
         run: |
+          export UID=$(id -u)
+          
           # Pull the latest versions of the images (mongo, etc)
           docker compose pull
 
