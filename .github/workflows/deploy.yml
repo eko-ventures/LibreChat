@@ -1,38 +1,35 @@
-name: Deploy_GHRunner_Linux_ACI
+# .github/workflows/deploy.yml
+name: Deploy LibreChat
 
+# This workflow runs on any push to the 'main' branch
 on:
-  workflow_dispatch:
-
-env:
-  RUNNER_VERSION: 2.293.0
-  ACI_RESOURCE_GROUP: 'Demo-ACI-GitHub-Runners-RG'
-  ACI_NAME: 'gh-runner-linux-01'
-  DNS_NAME_LABEL: 'gh-lin-01'
-  GH_OWNER: ${{ github.repository_owner }}
-  GH_REPOSITORY: 'LibreChat' #Change here to deploy self hosted runner ACI to another repo.
+  push:
+    branches: [ main ]
 
 jobs:
-  deploy-gh-runner-aci:
-    runs-on: ubuntu-latest
+  deploy:
+    # Run this job on your Ubuntu server
+    runs-on: self-hosted
+
     steps:
-      # checkout the repo
-      - name: 'Checkout GitHub Action'
+      # 1. Check out the new code
+      - name: Check out code
         uses: actions/checkout@v4
 
-      - name: 'Login via Azure CLI'
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # 2. Create the .env file from your GitHub Secret
+      - name: Create .env file
+        run: echo "${{ secrets.DOT_ENV }}" > .env
+        shell: bash
 
-      - name: 'Deploy to Azure Container Instances'
-        uses: 'azure/aci-deploy@v1'
-        with:
-          resource-group: ${{ env.ACI_RESOURCE_GROUP }}
-          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/pwd9000-github-runner-lin:${{ env.RUNNER_VERSION }}
-          registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          registry-username: ${{ secrets.REGISTRY_USERNAME }}
-          registry-password: ${{ secrets.REGISTRY_PASSWORD }}
-          name: ${{ env.ACI_NAME }}
-          dns-name-label: ${{ env.DNS_NAME_LABEL }}
-          environment-variables: GH_TOKEN=${{ secrets.PAT_TOKEN }} GH_OWNER=${{ env.GH_OWNER }} GH_REPOSITORY=${{ env.GH_REPOSITORY }}
-          location: 'eastus'
+      # 3. Run the docker-compose deployment commands
+      - name: Deploy with Docker Compose
+        run: |
+          # Pull the latest versions of the images (mongo, etc)
+          docker compose pull
+
+          # Build the local images (like 'api' and 'client')
+          # and re-create all containers in detached mode.
+          docker compose up -d --build
+
+          # Clean up any old, unused images
+          docker image prune -f
